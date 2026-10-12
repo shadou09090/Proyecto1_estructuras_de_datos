@@ -58,18 +58,19 @@ guardado comprimido no termina en `.bin`, se agrega esa extensión.
 - **Carga inicial:** 3 a 6 jugadores, nombres únicos de hasta 8 bytes, colores
   verde, azul, rojo, amarillo, negro o gris; 42 códigos únicos y unidades
   positivas. Los totales iniciales son 35/30/25/20 según el número de jugadores.
-- **Guardado:** el archivo principal contiene únicamente el encabezado, los
-  jugadores y las 42 filas del enunciado. Turno, fases, canjes y cartas se guardan
-  en un archivo auxiliar con el mismo nombre más `.estado`. Conserva ambos
-  archivos juntos para recuperar la partida completa. Primero se escriben
-  temporales; si falla el reemplazo, se intenta restaurar la versión anterior.
-  El auxiliar se valida contra el tablero. Se aceptan saltos de línea LF y CRLF.
-- **Sin auxiliar:** se valida como configuración inicial. Si los totales de tropas
-  no son iniciales, pero el tablero es válido, el programa pregunta si se trata
-  de una partida guardada. Al confirmar se recupera el tablero y se detectan
-  jugadores eliminados y ganador, pero las fases, las manos y los canjes se
-  reinician, con turno del primer jugador vivo. Un auxiliar presente y corrupto
-  se rechaza para no perder silenciosamente datos de la partida.
+- **Guardado:** sigue el ejemplo del profesor: cantidad de jugadores; una fila
+  por jugador con nombre, color, cantidad de cartas y sus ternas de identificador,
+  territorio y figura; cantidad de cartas del mazo; una terna por carta del mazo;
+  finalmente las 42 filas de territorios. Se conservan mayúsculas e identificadores.
+  `guardar_juego` es un alias de `guardar`.
+- **Auxiliar:** turno, fases y contador de canjes se conservan en `.estado`.
+  Sin ese auxiliar, el formato del profesor conserva manos y mazo, pero inicia
+  con el primer jugador vivo, fases nuevas y contador de canjes en cero.
+  Los archivos antiguos sin cartas también se pueden cargar; se genera un mazo.
+- **Comandos del profesor:** las líneas que comienzan por `#` se ignoran.
+  La secuencia completa de `juego_comandosv1.txt` todavía no es compatible:
+  el juego conserva su interfaz interactiva de refuerzos, ataque y fortificación.
+  El formato de los archivos de estado sí está implementado y verificado.
 - **Huffman:** formato `n(2) [carácter(1), frecuencia(8)] w(8) bits`, enteros
   little-endian, bits más significativos primero y relleno cero. Empates del
   árbol se resuelven por menor código de símbolo del subárbol. El texto recuperado

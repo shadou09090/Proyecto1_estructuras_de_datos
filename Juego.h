@@ -38,6 +38,9 @@ public:
     list<int> mazo;
     map<string, list<int>> manos;
     int canjes = 0;
+    map<int, pair<string, string>> datosCartas;
+    string territorioCarta(int id);
+    int figuraCarta(int id);
     bool salirSolicitado = false;
     string serializar();
     string serializarTablero();

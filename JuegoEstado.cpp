@@ -19,7 +19,7 @@ string codigoCarta(int id) {
 }
 int tipoCarta(int id) { return id >= 42 ? 3 : id % 3; }
 bool grupoValido(int a, int b, int c) {
-    int tipos[] = {tipoCarta(a), tipoCarta(b), tipoCarta(c)};
+    int tipos[] = {a, b, c};
     int comodines = 0;
     set<int> distintos;
     for (int t : tipos) { if (t == 3) ++comodines; else distintos.insert(t); }
@@ -31,7 +31,19 @@ void minusculas(string& s) {
 bool finalLinea(istringstream& linea) { linea >> ws; return linea.eof(); }
 }
 
+string Juego::territorioCarta(int id) {
+    return datosCartas.count(id) ? datosCartas[id].first : codigoCarta(id);
+}
+int Juego::figuraCarta(int id) {
+    if (!datosCartas.count(id)) return tipoCarta(id);
+    string tipo = datosCartas[id].second;
+    minusculas(tipo);
+    return tipo == "infanteria" ? 0 : tipo == "caballeria" ? 1 : tipo == "artilleria" ? 2 : 3;
+}
 void Juego::prepararCartas() {
+    datosCartas.clear();
+    const char* figuras[] = {"Infanteria", "Caballeria", "Artilleria", "Comodin"};
+    for (int id = 0; id < 44; ++id) datosCartas[id] = make_pair(codigoCarta(id), figuras[tipoCarta(id)]);
     vector<int> cartas;
     for (int i = 0; i < 44; ++i) cartas.push_back(i);
     static mt19937 generador(random_device{}());
@@ -46,7 +58,7 @@ void Juego::entregarCarta(const string& jugador) {
     if (mazo.empty()) { cout << "No quedan cartas en el mazo.\n"; return; }
     int carta = mazo.front(); mazo.pop_front();
     manos[jugador].push_back(carta);
-    cout << "Carta obtenida: " << carta + 1 << " (" << codigoCarta(carta) << ").\n";
+    cout << "Carta obtenida: " << carta + 1 << " (" << territorioCarta(carta) << ").\n";
 }
 
 int Juego::canjearCartas(Jugador& jugador) {
@@ -55,20 +67,20 @@ int Juego::canjearCartas(Jugador& jugador) {
     const char* dibujos[] = {"infanteria", "caballeria", "artilleria", "comodin"};
     while (mano.size() >= 3) {
         cout << "Cartas de " << jugador.getNombre() << ":\n";
-        for (int id : mano) cout << "  " << id + 1 << ": " << codigoCarta(id) << " - " << dibujos[tipoCarta(id)] << '\n';
+        for (int id : mano) cout << "  " << id + 1 << ": " << territorioCarta(id) << " - " << dibujos[figuraCarta(id)] << '\n';
         cout << "Ingrese tres numeros de carta para canjear, o 'fin' para continuar: ";
         string respuesta;
         if (!getline(cin, respuesta) || respuesta == "fin") break;
         istringstream entrada(respuesta);
         int a, b, c;
         if (!(entrada >> a >> b >> c) || !finalLinea(entrada) ||
-            a < 1 || b < 1 || c < 1 || a > 44 || b > 44 || c > 44) {
+            a < 1 || b < 1 || c < 1 || !datosCartas.count(a - 1) || !datosCartas.count(b - 1) || !datosCartas.count(c - 1)) {
             cout << "Seleccione tres cartas validas.\n"; continue;
         }
         --a; --b; --c;
         if (a == b || a == c || b == c || find(mano.begin(), mano.end(), a) == mano.end() ||
             find(mano.begin(), mano.end(), b) == mano.end() || find(mano.begin(), mano.end(), c) == mano.end() ||
-            !grupoValido(a, b, c)) { cout << "Combinacion de cartas invalida.\n"; continue; }
+            !grupoValido(figuraCarta(a), figuraCarta(b), figuraCarta(c))) { cout << "Combinacion de cartas invalida.\n"; continue; }
         int premio = canjes < 5 ? 4 + 2 * canjes : 15 + 5 * (canjes - 5);
         if (canjes >= 1000000 || static_cast<long long>(jugador.getnumUnidadesActuales()) + refuerzos + premio + 6 > numeric_limits<int>::max()) {
             cout << "El canje excede el limite de unidades admitido.\n"; break;
@@ -76,7 +88,7 @@ int Juego::canjearCartas(Jugador& jugador) {
         ++canjes;
         refuerzos += premio;
         for (int id : {a, b, c}) {
-            Territorio* territorio = buscarTerritorio(codigoCarta(id));
+            Territorio* territorio = buscarTerritorio(territorioCarta(id));
             if (territorio && territorio->getColorOcupante() == jugador.getColor()) {
                 territorio->setNumUnidades(territorio->getNumUnidades() + 2);
                 jugador.setnumUnidadesActuales(jugador.getnumUnidadesActuales() + 2);
@@ -92,7 +104,13 @@ int Juego::canjearCartas(Jugador& jugador) {
 string Juego::serializarTablero() {
     ostringstream salida;
     salida << jugadores.size() << '\n';
-    for (Jugador& j : jugadores) salida << j.getNombre() << ' ' << j.getColor() << '\n';
+    for (Jugador& j : jugadores) {
+        salida << j.getNombre() << ' ' << j.getColor() << ' ' << manos[j.getNombre()].size();
+        for (int id : manos[j.getNombre()]) salida << ' ' << id + 1 << ' ' << territorioCarta(id) << ' ' << datosCartas[id].second;
+        salida << '\n';
+    }
+    salida << mazo.size() << '\n';
+    for (int id : mazo) salida << id + 1 << ' ' << territorioCarta(id) << ' ' << datosCartas[id].second << '\n';
     for (list<Territorio>& continente : Continente) for (Territorio& t : continente)
         salida << t.getNombre() << ' ' << t.getColorOcupante() << ' ' << t.getNumUnidades() << '\n';
     return salida.str();
@@ -167,16 +185,51 @@ bool Juego::cargarTexto(const string& texto, bool validarInicio) {
     istringstream cabecera(linea);
     if (!(cabecera >> n) || !finalLinea(cabecera) || n < 3 || n > 6) return false;
     set<string> nombres, colores;
+    bool formatoCartas = false;
+    set<int> ids;
+    function<bool(istringstream&, list<int>&)> leerCarta = [&](istringstream& datos, list<int>& destino) {
+        int id;
+        string territorio, tipo;
+        if (!(datos >> id >> territorio >> tipo) || id <= 0 || !ids.insert(id - 1).second) return false;
+        string figura = tipo;
+        minusculas(figura);
+        if (figura != "infanteria" && figura != "caballeria" && figura != "artilleria" && figura != "comodin") return false;
+        bool codigoValido = territorio == "comodin";
+        for (int c = 0; c < 6; ++c) for (int t = 1; t <= cantidades[c]; ++t)
+            if (territorio == to_string(c + 1) + "." + to_string(t)) codigoValido = true;
+        if (!codigoValido) return false;
+        nuevo.datosCartas[id - 1] = make_pair(territorio, tipo);
+        destino.push_back(id - 1);
+        return true;
+    };
     const set<string> permitidos = {"verde", "azul", "rojo", "amarillo", "negro", "gris"};
     for (int i = 0; i < n; ++i) {
         if (!getline(entrada, linea)) return false;
         istringstream datos(linea);
         string nombre, color;
-        if (!(datos >> nombre >> color) || !finalLinea(datos)) return false;
-        minusculas(nombre); minusculas(color);
+        if (!(datos >> nombre >> color)) return false;
+        string nombreOriginal = nombre, colorOriginal = color; minusculas(nombre); minusculas(color);
         if (nombre.empty() || nombre.size() > 8 || !permitidos.count(color) ||
             !nombres.insert(nombre).second || !colores.insert(color).second) return false;
-        nuevo.jugadores.emplace_back(nombre, color);
+        if (i == 0) formatoCartas = !finalLinea(datos);
+        if (formatoCartas) {
+            int total;
+            if (!(datos >> total) || total < 0 || total > 10000) return false;
+            for (int k = 0; k < total; ++k) if (!leerCarta(datos, nuevo.manos[nombreOriginal])) return false;
+        }
+        if (!finalLinea(datos)) return false;
+        nuevo.jugadores.emplace_back(nombreOriginal, colorOriginal);
+    }
+    if (formatoCartas) {
+        if (!getline(entrada, linea)) return false;
+        istringstream datos(linea);
+        int total;
+        if (!(datos >> total) || total < 0 || total > 10000 || !finalLinea(datos)) return false;
+        for (int k = 0; k < total; ++k) {
+            if (!getline(entrada, linea)) return false;
+            istringstream carta(linea);
+            if (!leerCarta(carta, nuevo.mazo) || !finalLinea(carta)) return false;
+        }
     }
     set<string> pendientes;
     for (int c = 0; c < 6; ++c) {
@@ -191,22 +244,22 @@ bool Juego::cargarTexto(const string& texto, bool validarInicio) {
         if (!(datos >> codigo >> color >> unidades) || !finalLinea(datos) ||
             !pendientes.erase(codigo) || unidades <= 0 || unidades > numeric_limits<int>::max()) return false;
         minusculas(color);
-        list<Jugador>::iterator j = find_if(nuevo.jugadores.begin(), nuevo.jugadores.end(), [&](Jugador& jugador){return jugador.getColor() == color;});
+        list<Jugador>::iterator j = find_if(nuevo.jugadores.begin(), nuevo.jugadores.end(), [&](Jugador& jugador){string ocupante = jugador.getColor(); minusculas(ocupante); return ocupante == color;});
         if (j == nuevo.jugadores.end() || unidades > numeric_limits<int>::max() - j->getnumUnidadesActuales()) return false;
         j->agregarTerritorio(codigo);
         j->setnumUnidadesActuales(j->getnumUnidadesActuales() + static_cast<int>(unidades));
         Territorio t(codigo);
-        t.setNumero(stoi(codigo.substr(2))); t.setColorOcupante(color); t.setNumUnidades(static_cast<int>(unidades));
+        t.setNumero(stoi(codigo.substr(2))); t.setColorOcupante(j->getColor()); t.setNumUnidades(static_cast<int>(unidades));
         list<list<Territorio>>::iterator continente = nuevo.Continente.begin(); advance(continente, codigo[0] - '1');
         continente->push_back(t);
     }
     nuevo.jugadorTurnoActual = nuevo.jugadores.front().getNombre();
     for (Jugador& j : nuevo.jugadores) j.setestaEliminado(j.getCantidadTerritorios() == 0);
-    nuevo.prepararCartas();
+    if (!formatoCartas) nuevo.prepararCartas();
     entrada >> ws;
     if (entrada.eof()) {
         const int iniciales[] = {35, 30, 25, 20};
-        if (validarInicio) {
+        if (validarInicio && !formatoCartas) {
             for (Jugador& j : nuevo.jugadores) if (j.getnumUnidadesActuales() != iniciales[n - 3]) return false;
         } else {
             for (Jugador& j : nuevo.jugadores) if (!j.getestaEliminado()) {
@@ -227,9 +280,9 @@ bool Juego::cargarTexto(const string& texto, bool validarInicio) {
         set<int> cartas;
         nuevo.manos.clear(); nuevo.mazo.clear();
         function<bool(list<int>&, int)> leerCartas = [&](list<int>& destino, int total) {
-            if (total < 0 || total > 44) return false;
+            if (total < 0 || total > 10000) return false;
             for (int i = 0, id; i < total; ++i) {
-                if (!(entrada >> id) || id < 0 || id >= 44 || !cartas.insert(id).second) return false;
+                if (!(entrada >> id) || !nuevo.datosCartas.count(id) || !cartas.insert(id).second) return false;
                 destino.push_back(id);
             }
             return true;
@@ -245,7 +298,7 @@ bool Juego::cargarTexto(const string& texto, bool validarInicio) {
             if (!leerCartas(nuevo.manos[nombre], total) || (j->getestaEliminado() && total)) return false;
         }
         int total;
-        if (!(entrada >> total) || !leerCartas(nuevo.mazo, total) || cartas.size() != 44 || (entrada >> extra)) return false;
+        if (!(entrada >> total) || !leerCartas(nuevo.mazo, total) || cartas.size() != nuevo.datosCartas.size() || (entrada >> extra)) return false;
         int vivos = 0;
         for (Jugador& j : nuevo.jugadores) if (!j.getestaEliminado()) ++vivos;
         if (nuevo.juegoTerminado != (vivos == 1)) return false;

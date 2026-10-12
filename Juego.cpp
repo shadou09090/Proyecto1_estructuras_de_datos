@@ -188,7 +188,10 @@ static Jugador *buscarJugadorPorColor(list<Jugador> &jugadores, const string &co
 Jugador* Juego::buscarJugador(string nombre) {
     list<Jugador>::iterator it;
     for (it = jugadores.begin(); it != jugadores.end(); ++it) {
-        if (it->getNombre() == nombre) {
+        string candidato = it->getNombre();
+        for (char& c : candidato) c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+        for (char& c : nombre) c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+        if (candidato == nombre) {
             return &(*it);
         }
     }
@@ -289,8 +292,9 @@ void Juego::Gestor_comandos(string commando) {
     istringstream entrada(commando);
     string accion, argumento;
     entrada >> accion;
-    if (accion.empty()) return;
+    if (accion.empty() || accion[0] == '#') return;
     for (char& c : accion) c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    if (accion == "guardar_juego") accion = "guardar";
     vector<string> parametros;
     while (entrada >> ws && entrada.peek() != char_traits<char>::eof()) {
         if (entrada.peek() == '"') {
@@ -323,6 +327,8 @@ void Juego::Gestor_comandos(string commando) {
     if (accion == "guardar") { Guardar(parametros[0]); return; }
     if (accion == "guardar_comprimido") { Guardar_comprimido(parametros[0]); return; }
     for (char& c : parametros[0]) c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+    Jugador* seleccionado = buscarJugador(parametros[0]);
+    if (seleccionado) parametros[0] = seleccionado->getNombre();
     if (accion == "obtener_unidades") Obtener_unidades(parametros[0]);
     else if (accion == "atacar") Atacar(parametros[0]);
     else if (accion == "fortificar") Fortificar(parametros[0]);
