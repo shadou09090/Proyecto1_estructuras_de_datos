@@ -1,10 +1,10 @@
-//
-// Created by gniko on 29/08/2026.
-//
+
 
 #include "Territorio.h"
 
 #include <list>
+
+using namespace std;
 
 Territorio::Territorio(string nombre) {
     this->nombre = nombre;
@@ -42,11 +42,11 @@ void Territorio::setNumUnidades(int numUnidades) {
 }
 
 void Territorio::agregarVecino(string vecino) {
-    territoriosVecinos.push_back(vecino);
+    if (vecino != nombre && !esVecino(vecino)) territoriosVecinos.push_back(vecino);
 }
 
 bool Territorio::esVecino(string vecino) {
-    pmr::list<string>::iterator it;
+    list<string>::iterator it;
     for (it = territoriosVecinos.begin(); it != territoriosVecinos.end(); ++it) {
         if (*it == vecino) {
             return true;

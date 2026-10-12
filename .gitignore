@@ -1,4 +1,6 @@
 cmake-build-debug/
+build/
+.risk-tests-*/
 .idea/
 *.exe
 *.obj

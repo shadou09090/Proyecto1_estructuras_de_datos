@@ -1,12 +1,9 @@
-//
-// Created by gniko on 29/08/2026.
-//
 
 #ifndef PROYECTO_ESTRUCTURAS_PAIS_JUGADOR_H
 #define PROYECTO_ESTRUCTURAS_PAIS_JUGADOR_H
 #include <string>
 #include <list>
-//#include "Carta.h"
+
 using namespace std;
 class Jugador {
 private:
@@ -18,7 +15,6 @@ private:
     bool obtuvoUnidades;
     bool yaAtaque;
     list<string> nombresTerritoriosOcupados;
-    //list<Carta> manoCartas;
     bool yaFortifique;
 public:
     Jugador();
@@ -49,4 +45,4 @@ public:
     void setYaFortifique(bool yaFortifique);
     bool poseeTerritorio(string territorio);
 };
-#endif //PROYECTO_ESTRUCTURAS_PAIS_JUGADOR_H
+#endif

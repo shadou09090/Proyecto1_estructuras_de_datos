@@ -1,16 +1,13 @@
-//
-// Created by gniko on 29/08/2026.
-//
-using  namespace  std;
-
 #ifndef PROYECTO_ESTRUCTURAS_PAIS_TERRITORIO_H
 #define PROYECTO_ESTRUCTURAS_PAIS_TERRITORIO_H
 #include <string>
 #include <list>
 
+using namespace std;
+
 class Territorio {
 private:
-    std::string nombre;
+    string nombre;
     int numero;
     string colorOcupante;
     int numUnidades;
@@ -34,4 +31,4 @@ public:
 };
 
 
-#endif //PROYECTO_ESTRUCTURAS_PAIS_TERRITORIO_H
+#endif

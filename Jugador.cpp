@@ -1,9 +1,8 @@
-//
-// Created by gniko on 29/08/2026.
-//
-using namespace std;
+
 #include "Jugador.h"
 #include <iostream>
+
+using namespace std;
 Jugador::Jugador() {
     this->nombre = "";
     this->color = "";
@@ -11,6 +10,7 @@ Jugador::Jugador() {
     this->obtuvoUnidades = false;
     this->estaEliminado = false;
     this->yaAtaque = false;
+    this->yaFortifique = false;
 }
 
 
@@ -21,6 +21,7 @@ Jugador::Jugador(string nombre, string color) {
     this->obtuvoUnidades = false;
     this->estaEliminado = false;
     this->yaAtaque = false;
+    this->yaFortifique = false;
 }
 string Jugador::getNombre() {
     return nombre;
@@ -71,7 +72,7 @@ int Jugador::getCantidadTerritorios() {
     return this->nombresTerritoriosOcupados.size();
 }
 void Jugador::agregarTerritorio(string territorio) {
-    this->nombresTerritoriosOcupados.push_back(territorio);
+    if (!poseeTerritorio(territorio)) this->nombresTerritoriosOcupados.push_back(territorio);
 }
 bool Jugador::eliminarTerritorio(string territorio) {
     list<string>::iterator it;

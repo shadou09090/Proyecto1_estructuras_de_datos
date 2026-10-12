@@ -5,7 +5,8 @@
 
 #include "Juego.h"
 #include "Jugador.h"
-using  namespace  std;
+
+using namespace std;
 
 int main() {
 #ifdef _WIN32
