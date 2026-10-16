@@ -31,16 +31,16 @@ ayuda
 ayuda guardar_comprimido
 inicializar archivo_inicio.txt
 estado_juego
-costo_conquista nikolas 5.6
-conquista_mas_barata nikolas
-obtener_unidades nikolas
+costo_conquista Hugo 5.6
+conquista_mas_barata Hugo
+obtener_unidades Hugo
 ```
 
 La aplicación pide territorio y cantidad hasta ubicar todos los refuerzos.
 `ayuda` muestra los comandos disponibles para la fase actual; `ayuda comando`
 permite consultar cualquier sintaxis, incluso cuando el comando aún no está disponible.
-Luego se ejecuta `atacar nikolas`; escribir `fin` permite terminar la fase.
-`fortificar nikolas` permite mover entre dos territorios propios vecinos,
+Luego se ejecuta `atacar Hugo`; escribir `fin` permite terminar la fase.
+`fortificar Hugo` permite mover entre dos territorios propios vecinos,
 o escribir `fin` para pasar al siguiente jugador sin mover.
 
 ```text
@@ -54,6 +54,13 @@ Se conservan mayúsculas y espacios del nombre de archivo. Si el nombre de
 guardado comprimido no termina en `.bin`, se agrega esa extensión.
 
 ## Decisiones de implementación
+
+`archivo_inicio.txt` contiene a Hugo (Azul), Paco (Rojo) y Luis (Verde).
+El `0` de cada jugador indica que comienza sin cartas. A continuación, el `8`
+indica la cantidad de cartas del mazo, con identificadores del 101 al 108;
+cada fila contiene identificador, código de territorio y figura. Después siguen
+las 42 filas de territorios con código, color y unidades. Este formato se carga
+directamente con `inicializar archivo_inicio.txt`; el primer turno es de Hugo.
 
 - **Carga inicial:** 3 a 6 jugadores, nombres únicos de hasta 8 bytes, colores
   verde, azul, rojo, amarillo, negro o gris; 42 códigos únicos y unidades
@@ -78,8 +85,11 @@ guardado comprimido no termina en `.bin`, se agrega esa extensión.
   no incluye el auxiliar de estado dentro del binario.
   Se rechazan truncamiento, frecuencias inconsistentes, duplicados y bytes extra.
   La carga admite archivos/descompresión de hasta 4 MiB.
-- **Cartas:** 42 cartas de territorio con dibujos cíclicos (14 de cada tipo),
-  dos comodines, una carta por fase con conquista, transferencia al eliminar un
+- **Cartas:** cuando el TXT incluye cartas, se conservan exactamente las manos,
+  el mazo, sus identificadores y figuras (ocho cartas en el archivo de inicio).
+  Para archivos antiguos sin cartas se generan 42 cartas de territorio con
+  dibujos cíclicos (14 de cada tipo) y dos comodines.
+  Se entrega una carta por fase con conquista, con transferencia al eliminar un
   rival, devolución al mazo tras canje. No se incluyen misiones secretas:
   se juega la variante de conquista de los 42 territorios.
 - **Rutas:** grafo del tablero clásico; Dijkstra multiorigen, todos los
